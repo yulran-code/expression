@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Random Trigger Roleplay Trainer</title>
+  <title>Sheet-Synced SRS Trigger Trainer</title>
   <style>
     :root {
       --bg: #121212;
@@ -15,6 +15,7 @@
       --gold: #ffd166;
       --star: #f5c518;
       --ok: #2ec4b6;
+      --warn: #ff7b54;
     }
     * { box-sizing: border-box; }
     body {
@@ -26,10 +27,7 @@
       display: flex;
       justify-content: center;
     }
-    .app {
-      width: 100%;
-      max-width: 720px;
-    }
+    .app { width: 100%; max-width: 740px; }
     .topbar {
       display: flex;
       flex-wrap: wrap;
@@ -38,11 +36,7 @@
       gap: 10px;
       margin-bottom: 14px;
     }
-    .filter-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       padding: 7px 12px;
       border-radius: 999px;
@@ -84,9 +78,7 @@
       color: #555;
       cursor: pointer;
     }
-    .star-btn.active {
-      color: var(--star);
-    }
+    .star-btn.active { color: var(--star); }
     .meta-row {
       display: flex;
       align-items: center;
@@ -94,58 +86,27 @@
       margin-bottom: 14px;
       flex-wrap: wrap;
     }
-    .cat-tag {
+    .tag {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
       background: #2b2d42;
       color: #c7d2fe;
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 8px;
     }
-    .chunk-tag {
-      background: #1d3557;
-      color: #90e0ef;
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 8px;
-    }
+    .tag.chunk { background: #1d3557; color: #90e0ef; }
+    .tag.srs { background: #263238; color: #80cbc4; }
     .trigger-box {
       background: var(--box);
       border-left: 4px solid var(--gold);
       border-radius: 12px;
       padding: 18px;
-      margin-bottom: 16px;
-    }
-    .context-label {
-      font-size: 12px;
-      color: var(--gold);
-      font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: 0.3px;
-    }
-    .context-text {
-      font-size: 15px;
-      line-height: 1.5;
-      color: #e5e5e5;
       margin-bottom: 14px;
     }
-    .cue-label {
-      font-size: 12px;
-      color: var(--ok);
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .cue-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .cue-text {
-      font-size: 19px;
-      font-weight: 600;
-      color: #fff;
-      line-height: 1.45;
-    }
+    .context-label { font-size: 12px; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+    .context-text { font-size: 15px; line-height: 1.5; color: #e5e5e5; margin-bottom: 14px; }
+    .cue-label { font-size: 12px; color: var(--ok); font-weight: 700; margin-bottom: 6px; }
+    .cue-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .cue-text { font-size: 19px; font-weight: 600; color: #fff; line-height: 1.45; }
     .mini-btn {
       background: #343434;
       color: #fff;
@@ -157,54 +118,27 @@
       white-space: nowrap;
     }
     .mini-btn:hover { background: #444; }
+    .hint-box {
+      display: none;
+      background: #222831;
+      border: 1px solid #394867;
+      color: #a5d8ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .hint-box.show { display: block; }
     .speak-prompt {
       text-align: center;
-      padding: 16px;
+      padding: 15px;
       border: 1px dashed #444;
       border-radius: 12px;
       color: var(--sub);
-      font-size: 15px;
-      margin-bottom: 16px;
+      font-size: 14px;
+      margin-bottom: 14px;
     }
-    .speak-prompt strong {
-      color: #fff;
-      display: block;
-      font-size: 17px;
-      margin-bottom: 4px;
-    }
-    .answer-box {
-      display: none;
-      background: #17222b;
-      border: 1px solid #2b4c65;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    .answer-box.revealed {
-      display: block;
-    }
-    .answer-english {
-      font-size: 25px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
-      line-height: 1.35;
-    }
-    .answer-english.masked {
-      filter: blur(8px);
-      cursor: pointer;
-    }
-    .answer-korean {
-      font-size: 17px;
-      color: var(--gold);
-      margin-bottom: 16px;
-    }
-    .video-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
+    .speak-prompt strong { color: #fff; display: block; font-size: 16px; margin-bottom: 4px; }
     .btn {
       border: none;
       border-radius: 11px;
@@ -212,47 +146,34 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.08s ease, opacity 0.15s ease;
+      transition: transform 0.08s ease;
     }
     .btn:active { transform: scale(0.99); }
-    .btn-reveal {
-      width: 100%;
-      background: var(--accent);
-      color: #fff;
-      margin-bottom: 10px;
-    }
-    .btn-reroll {
-      width: 100%;
-      background: #2c2c2c;
-      color: #ddd;
-    }
-    .btn-playphrase {
-      background: #e63946;
-      color: #fff;
-    }
-    .btn-yarn {
-      background: #2a9d8f;
-      color: #fff;
-    }
-    .btn-tts {
-      background: #333;
-      color: #fff;
-    }
-    .btn-done {
-      background: #3a86ff;
-      color: #fff;
-    }
-    .post-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .pre-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 10px; }
+    .btn-reveal { background: var(--accent); color: #fff; width: 100%; }
+    .btn-hint { background: #2f3640; color: #ffd166; padding: 13px 16px; }
+    .btn-reroll { width: 100%; background: #2c2c2c; color: #ddd; }
+    .answer-box {
+      display: none;
+      background: #17222b;
+      border: 1px solid #2b4c65;
+      border-radius: 14px;
+      padding: 20px;
       margin-top: 10px;
+      text-align: center;
     }
-    .nav-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
+    .answer-box.revealed { display: block; }
+    .answer-english { font-size: 25px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.35; }
+    .answer-english.masked { filter: blur(8px); cursor: pointer; }
+    .answer-korean { font-size: 17px; color: var(--gold); margin-bottom: 16px; }
+    .video-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-playphrase { background: #e63946; color: #fff; }
+    .btn-yarn { background: #2a9d8f; color: #fff; }
+    .srs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn-again { background: var(--warn); color: #fff; }
+    .btn-good { background: #2a9d8f; color: #fff; }
+    .btn-easy { background: #3a86ff; color: #fff; }
+    .nav-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     .nav-btn {
       background: var(--card);
       color: var(--text);
@@ -262,22 +183,17 @@
       font-size: 14px;
       cursor: pointer;
     }
-    .shortcut-hint {
-      text-align: center;
-      color: #777;
-      font-size: 12px;
-      margin-top: 12px;
-      line-height: 1.5;
-    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="topbar">
       <div class="filter-group">
-        <button id="fAll" class="chip active" onclick="setFilter('all')">전체 문장</button>
-        <button id="fStar" class="chip" onclick="setFilter('star')">★ 즐겨찾기</button>
-        <button id="fMask" class="chip" onclick="toggleMask()">정답 영어 가리기</button>
+        <button id="fDue" class="chip active" onclick="setMode('due')">오늘 복습/신규 (시트동기화)</button>
+        <button id="fSession15" class="chip" onclick="setMode('session15')">오늘 집중 15개</button>
+        <button id="fStar" class="chip" onclick="setMode('star')">★ 즐겨찾기</button>
+        <button id="fAll" class="chip" onclick="setMode('all')">전체 보기</button>
+        <button id="fMask" class="chip" onclick="toggleMask()">정답 가리기</button>
       </div>
       <div class="badge" id="statusBadge">불러오는 중...</div>
     </div>
@@ -286,36 +202,37 @@
       <button class="star-btn" id="starBtn" onclick="toggleStar()" title="즐겨찾기">★</button>
 
       <div class="meta-row">
-        <span class="cat-tag" id="categoryTag">카테고리</span>
-        <span class="chunk-tag" id="chunkTag">검색 청크: -</span>
+        <span class="tag" id="categoryTag">카테고리</span>
+        <span class="tag chunk" id="chunkTag">청크: -</span>
+        <span class="tag srs" id="srsTag">SRS: 신규</span>
       </div>
 
-      <!-- 1단계: 랜덤 상황 지문 & 상대방 대사 -->
       <div class="trigger-box">
         <div class="context-label">📍 랜덤 상황 지문</div>
-        <div class="context-text" id="contextText">상황을 불러오는 중입니다...</div>
+        <div class="context-text" id="contextText">데이터를 불러오는 중입니다...</div>
 
         <div class="cue-label">💬 상대방 대사 (Cue)</div>
         <div class="cue-row">
           <div class="cue-text" id="cueText">-</div>
-          <button class="mini-btn" onclick="speakText(currentTrigger.cue)">🔊 상대 대사 듣기</button>
+          <button class="mini-btn" onclick="speakText(currentTrigger.cue)">🔊 상대 대사</button>
         </div>
       </div>
 
-      <!-- 2단계: 반사 발화 유도 영역 -->
+      <div class="hint-box" id="hintBox"></div>
+
       <div class="speak-prompt" id="speakPrompt">
-        <strong>🎙️ 지금 상황을 떠올리며 영어로 반사 발화해 보세요!</strong>
-        머릿속 번역보다 상황 느낌대로 먼저 입 밖으로 꺼낸 뒤 정답을 확인하세요.
+        <strong>🎙️ 상황을 떠올리며 영어로 반사 발화해 보세요!</strong>
+        생각이 안 나면 힌트나 정답을 연 뒤 영화·미드 장면과 함께 소리 내어 따라 해보세요.
       </div>
 
-      <button class="btn btn-reveal" id="revealBtn" onclick="revealAnswer()">
-        정답 문장 & 영화/미드 클립 띄우기
-      </button>
-      <button class="btn btn-reroll" onclick="rerollTrigger()">
-        🎲 같은 문장의 다른 상황 랜덤 뽑기
-      </button>
+      <div id="preRevealControls">
+        <div class="pre-grid">
+          <button class="btn btn-reveal" onclick="revealAnswer()">정답 문장 & 클립 보기</button>
+          <button class="btn btn-hint" onclick="showHint()">💡 첫 단어 힌트</button>
+        </div>
+        <button class="btn btn-reroll" onclick="rerollTrigger()">🎲 같은 문장의 다른 상황 뽑기</button>
+      </div>
 
-      <!-- 3단계: 정답 공개 + PlayPhrase / Yarn 버튼 -->
       <div class="answer-box" id="answerBox">
         <div class="answer-english" id="answerEnglish" onclick="this.classList.remove('masked')">-</div>
         <div class="answer-korean" id="answerKorean">-</div>
@@ -325,132 +242,66 @@
           <button class="btn btn-yarn" onclick="openScene('yarn')">🎞️ Yarn 미드 클립</button>
         </div>
 
-        <div class="post-grid">
-          <button class="btn btn-tts" onclick="speakText(currentItem.english)">🔊 내 정답 발음 듣기</button>
-          <button class="btn btn-done" onclick="completeAndNext()">✅ 1회 완료 & 다음 문장</button>
+        <div class="srs-grid">
+          <button class="btn btn-again" onclick="rateCard('again')">😅 다시 보기<br><span style="font-size:11px;font-weight:400;">(3문제 뒤 + 내일)</span></button>
+          <button class="btn btn-good" onclick="rateCard('good')">✅ 기억남<br><span id="goodLabel" style="font-size:11px;font-weight:400;">(+1일)</span></button>
+          <button class="btn btn-easy" onclick="rateCard('easy')">⚡ 아주 쉬움<br><span id="easyLabel" style="font-size:11px;font-weight:400;">(+4일)</span></button>
         </div>
       </div>
     </div>
 
     <div class="nav-row">
-      <button class="nav-btn" onclick="prevItem()">← 이전 문장</button>
-      <button class="nav-btn" onclick="randomItem()">🔀 랜덤 문장</button>
-      <button class="nav-btn" onclick="nextItem()">다음 문장 →</button>
-    </div>
-
-    <div class="shortcut-hint">
-      단축키: <b>Space</b> 정답 공개/정답 발음 · <b>Enter</b> PlayPhrase 열기 · <b>R</b> 다른 상황 뽑기 · <b>← / →</b> 문장 이동
+      <button class="nav-btn" onclick="prevItem()">← 이전 카드</button>
+      <button class="nav-btn" onclick="speakText(currentItem?.english)">🔊 정답 발음</button>
+      <button class="nav-btn" onclick="nextItem()">다음 카드 →</button>
     </div>
   </div>
 
   <script>
-    // ▼ 여기에 Google Apps Script 웹 앱 URL을 붙여넣으세요 ▼
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwU58pr4pQPWxYFPPSuQeRMdFObrYg6B6vWt6epazyczJixpkd8eSVUyn4yEdjbW6oC/exec';
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
-    let phrases = [];
-    let filtered = [];
+    let rawPhrases = [];
+    let queue = [];
     let currentIndex = 0;
     let currentItem = null;
     let currentTrigger = { context: '', cue: '' };
     let isRevealed = false;
     let isMasked = false;
-    let filterMode = 'all';
+    let mode = 'due';
+    let availableVoices = [];
 
-    async function init() {
-      try {
-        const res = await fetch(GAS_URL);
-        phrases = await res.json();
-        applyFilter();
-      } catch (err) {
-        document.getElementById('contextText').innerText =
-          '스프레드시트 데이터를 불러오지 못했습니다. GAS_URL 설정과 웹 앱 배포 권한을 확인해 주세요.';
-      }
+    function todayStr(offsetDays = 0) {
+      return new Date(Date.now() + offsetDays * DAY_MS).toISOString().slice(0, 10);
     }
 
-    function setFilter(mode) {
-      filterMode = mode;
-      document.getElementById('fAll').classList.toggle('active', mode === 'all');
-      document.getElementById('fStar').classList.toggle('active', mode === 'star');
-      applyFilter();
+    function loadVoices() {
+      if (!('speechSynthesis' in window)) return;
+      availableVoices = window.speechSynthesis.getVoices() || [];
     }
 
-    function toggleMask() {
-      isMasked = !isMasked;
-      document.getElementById('fMask').classList.toggle('active', isMasked);
-      const engEl = document.getElementById('answerEnglish');
-      engEl.classList.toggle('masked', isMasked);
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    function applyFilter() {
-      filtered = filterMode === 'star'
-        ? phrases.filter(p => p.starred)
-        : [...phrases];
-      currentIndex = 0;
-      loadItem(0);
-    }
+    function pickBestEnglishVoice() {
+      if (!availableVoices.length) loadVoices();
+      const enVoices = availableVoices.filter(v => /^en[-_]/i.test(v.lang));
+      const pool = enVoices.length ? enVoices : availableVoices;
+      if (!pool.length) return null;
 
-    function pickRandomTrigger(triggersRaw) {
-      if (!triggersRaw) {
-        return { context: '자연스러운 일상 대화 상황', cue: 'How\'s it going?' };
-      }
-      const candidates = String(triggersRaw)
-        .split('|')
-        .map(s => s.trim())
-        .filter(Boolean);
-
-      const chosen = candidates[Math.floor(Math.random() * candidates.length)] || '';
-      const parts = chosen.split('::');
-      return {
-        context: (parts[0] || '일상 대화 상황').trim(),
-        cue: (parts[1] || '').replace(/^"+|"+$/g, '').trim()
+      // Natural / Neural / Enhanced 우선, 그 다음 en-US 우선
+      const score = (v) => {
+        let s = 0;
+        const n = (v.name || '').toLowerCase();
+        if (n.includes('natural') || n.includes('neural')) s += 50;
+        if (n.includes('enhanced') || n.includes('premium')) s += 30;
+        if (/^en-us/i.test(v.lang)) s += 20;
+        if (n.includes('google') && !n.includes('natural')) s -= 5;
+        return s;
       };
-    }
-
-    function loadItem(idx) {
-      if (filtered.length === 0) {
-        currentItem = null;
-        document.getElementById('contextText').innerText = '표시할 문장이 없습니다.';
-        document.getElementById('cueText').innerText = '-';
-        document.getElementById('statusBadge').innerText = '0 / 0';
-        return;
-      }
-
-      currentIndex = ((idx % filtered.length) + filtered.length) % filtered.length;
-      currentItem = filtered[currentIndex];
-      isRevealed = false;
-
-      document.getElementById('answerBox').classList.remove('revealed');
-      document.getElementById('revealBtn').style.display = 'block';
-      document.getElementById('speakPrompt').style.display = 'block';
-
-      document.getElementById('statusBadge').innerText =
-        `${currentIndex + 1} / ${filtered.length} (누적 ${currentItem.count || 0}회)`;
-      document.getElementById('categoryTag').innerText = currentItem.category || '일반';
-      document.getElementById('chunkTag').innerText = `검색 청크: ${currentItem.chunk || currentItem.english}`;
-      document.getElementById('starBtn').classList.toggle('active', Boolean(currentItem.starred));
-
-      document.getElementById('answerEnglish').innerText = currentItem.english;
-      document.getElementById('answerEnglish').classList.toggle('masked', isMasked);
-      document.getElementById('answerKorean').innerText = currentItem.korean;
-
-      rerollTrigger();
-    }
-
-    function rerollTrigger() {
-      if (!currentItem) return;
-      currentTrigger = pickRandomTrigger(currentItem.triggers);
-      document.getElementById('contextText').innerText = currentTrigger.context;
-      document.getElementById('cueText').innerText =
-        currentTrigger.cue ? `"${currentTrigger.cue}"` : '(상황 지문을 보고 자연스럽게 반응해 보세요)';
-    }
-
-    function revealAnswer() {
-      if (!currentItem) return;
-      isRevealed = true;
-      document.getElementById('answerBox').classList.add('revealed');
-      document.getElementById('revealBtn').style.display = 'none';
-      document.getElementById('speakPrompt').style.display = 'none';
-      speakText(currentItem.english);
+      return [...pool].sort((a, b) => score(b) - score(a))[0];
     }
 
     function speakText(text) {
@@ -459,7 +310,153 @@
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = 'en-US';
       utter.rate = 0.95;
+      const bestVoice = pickBestEnglishVoice();
+      if (bestVoice) utter.voice = bestVoice;
       window.speechSynthesis.speak(utter);
+    }
+
+    function postToSheet(payload) {
+      if (!GAS_URL || GAS_URL.includes('여기에_배포된_웹앱_URL')) return;
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    async function init() {
+      try {
+        const res = await fetch(GAS_URL);
+        rawPhrases = await res.json();
+        rebuildQueue();
+      } catch (err) {
+        document.getElementById('contextText').innerText =
+          '구글 시트 데이터를 불러오지 못했습니다. GAS_URL과 웹 앱 배포 상태를 확인해 주세요.';
+      }
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      ['fDue', 'fSession15', 'fStar', 'fAll'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      const map = { due: 'fDue', session15: 'fSession15', star: 'fStar', all: 'fAll' };
+      document.getElementById(map[nextMode]).classList.add('active');
+      rebuildQueue();
+    }
+
+    function toggleMask() {
+      isMasked = !isMasked;
+      document.getElementById('fMask').classList.toggle('active', isMasked);
+      document.getElementById('answerEnglish').classList.toggle('masked', isMasked);
+    }
+
+    function isDueToday(item) {
+      if (!item.due) return true; // due 날짜가 없으면 신규/미스케줄 카드
+      return item.due <= todayStr(0);
+    }
+
+    function rebuildQueue() {
+      let list = [...rawPhrases];
+      if (mode === 'due') {
+        const dueList = list.filter(isDueToday);
+        queue = dueList.length > 0 ? dueList : list;
+      } else if (mode === 'session15') {
+        const dueList = list.filter(isDueToday);
+        queue = (dueList.length > 0 ? dueList : list).slice(0, 15);
+      } else if (mode === 'star') {
+        queue = list.filter(p => p.starred);
+      } else {
+        queue = list;
+      }
+      loadCardAt(0);
+    }
+
+    function pickRandomTrigger(triggersRaw) {
+      if (!triggersRaw) {
+        return { context: '자연스러운 일상 대화 상황', cue: "How's it going?" };
+      }
+      const partsList = String(triggersRaw)
+        .split('|')
+        .map(s => s.trim())
+        .filter(Boolean);
+      const chosen = partsList[Math.floor(Math.random() * partsList.length)] || '';
+      const [ctx, cue] = chosen.split('::');
+      return {
+        context: (ctx || '일상 대화 상황').trim(),
+        cue: (cue || '').replace(/^"+|"+$/g, '').trim()
+      };
+    }
+
+    function updateSrsPreviewLabels(item) {
+      const interval = Number(item.interval) || 0;
+      const ease = Number(item.ease) || 2.5;
+      const nextGood = interval === 0 ? 1 : interval === 1 ? 3 : Math.round(interval * ease);
+      const nextEasy = interval === 0 ? 4 : Math.round(nextGood * 1.3);
+      document.getElementById('goodLabel').innerText = `(+${nextGood}일)`;
+      document.getElementById('easyLabel').innerText = `(+${nextEasy}일)`;
+    }
+
+    function loadCardAt(idx) {
+      if (!queue.length) {
+        currentItem = null;
+        document.getElementById('contextText').innerText = '해당 조건에 맞는 문장이 없습니다.';
+        document.getElementById('cueText').innerText = '-';
+        document.getElementById('statusBadge').innerText = '0 / 0';
+        return;
+      }
+
+      currentIndex = ((idx % queue.length) + queue.length) % queue.length;
+      currentItem = queue[currentIndex];
+      isRevealed = false;
+
+      document.getElementById('answerBox').classList.remove('revealed');
+      document.getElementById('preRevealControls').style.display = 'block';
+      document.getElementById('speakPrompt').style.display = 'block';
+      document.getElementById('hintBox').classList.remove('show');
+      document.getElementById('hintBox').innerText = '';
+
+      document.getElementById('statusBadge').innerText =
+        `남은 카드 ${queue.length}개 · 누적 ${Number(currentItem.count) || 0}회`;
+      document.getElementById('categoryTag').innerText = currentItem.category || '일반';
+      document.getElementById('chunkTag').innerText = `청크: ${currentItem.chunk || currentItem.english}`;
+      document.getElementById('srsTag').innerText = currentItem.due
+        ? `다음 복습: ${currentItem.due} (간격 ${currentItem.interval || 0}일)`
+        : 'SRS: 신규';
+      document.getElementById('starBtn').classList.toggle('active', Boolean(currentItem.starred));
+
+      document.getElementById('answerEnglish').innerText = currentItem.english;
+      document.getElementById('answerEnglish').classList.toggle('masked', isMasked);
+      document.getElementById('answerKorean').innerText = currentItem.korean;
+
+      updateSrsPreviewLabels(currentItem);
+      rerollTrigger();
+    }
+
+    function rerollTrigger() {
+      if (!currentItem) return;
+      currentTrigger = pickRandomTrigger(currentItem.triggers);
+      document.getElementById('contextText').innerText = currentTrigger.context;
+      document.getElementById('cueText').innerText =
+        currentTrigger.cue ? `"${currentTrigger.cue}"` : '(상황 지문을 보고 반사 발화해 보세요)';
+    }
+
+    function showHint() {
+      if (!currentItem) return;
+      const words = currentItem.english.split(/\s+/);
+      const firstWord = words[0] || '';
+      const maskedRest = words.slice(1).map(w => w.replace(/[A-Za-z']/g, '_')).join(' ');
+      const hb = document.getElementById('hintBox');
+      hb.innerText = `💡 첫 단어 힌트: ${firstWord} ${maskedRest}  |  뜻 힌트: ${currentItem.korean}`;
+      hb.classList.add('show');
+    }
+
+    function revealAnswer() {
+      if (!currentItem) return;
+      isRevealed = true;
+      document.getElementById('answerBox').classList.add('revealed');
+      document.getElementById('preRevealControls').style.display = 'none';
+      document.getElementById('speakPrompt').style.display = 'none';
+      speakText(currentItem.english);
     }
 
     function openScene(platform) {
@@ -468,71 +465,76 @@
       const url = platform === 'playphrase'
         ? `https://www.playphrase.me/#/search?q=${query}`
         : `https://getyarn.io/yarn-find?text=${query}`;
-
       window.open(url, 'PhraseSceneWindow', 'width=860,height=660,left=720,top=50');
     }
 
-    async function completeAndNext() {
-      if (!currentItem) return;
+    function rateCard(rating) {
+      if (!currentItem || !queue.length) return;
+      let interval = Number(currentItem.interval) || 0;
+      let ease = Number(currentItem.ease) || 2.5;
+
+      if (rating === 'again') {
+        interval = 1;
+        ease = Math.max(1.3, Number((ease - 0.2).toFixed(2)));
+        currentItem.interval = interval;
+        currentItem.ease = ease;
+        currentItem.due = todayStr(1);
+
+        postToSheet({
+          action: 'saveSrs',
+          rowIndex: currentItem.rowIndex,
+          incrementCount: false,
+          interval,
+          ease,
+          due: currentItem.due
+        });
+
+        const [card] = queue.splice(currentIndex, 1);
+        const insertAt = Math.min(queue.length, 3);
+        queue.splice(insertAt, 0, card);
+        loadCardAt(currentIndex % Math.max(1, queue.length));
+        return;
+      }
+
+      if (rating === 'good') {
+        interval = interval === 0 ? 1 : interval === 1 ? 3 : Math.round(interval * ease);
+      } else if (rating === 'easy') {
+        const base = interval === 0 ? 1 : interval === 1 ? 3 : Math.round(interval * ease);
+        interval = interval === 0 ? 4 : Math.round(base * 1.3);
+        ease = Number((ease + 0.15).toFixed(2));
+      }
+
+      currentItem.interval = interval;
+      currentItem.ease = ease;
+      currentItem.due = todayStr(interval);
       currentItem.count = (Number(currentItem.count) || 0) + 1;
-      const targetRow = currentItem.rowIndex;
 
-      nextItem();
+      postToSheet({
+        action: 'saveSrs',
+        rowIndex: currentItem.rowIndex,
+        incrementCount: true,
+        interval,
+        ease,
+        due: currentItem.due
+      });
 
-      if (GAS_URL && !GAS_URL.includes('여기에_배포된_웹앱_URL') && targetRow) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'increment', rowIndex: targetRow })
-        }).catch(() => {});
+      queue.splice(currentIndex, 1);
+      if (queue.length === 0) {
+        rebuildQueue();
+      } else {
+        loadCardAt(currentIndex % queue.length);
       }
     }
 
-    async function toggleStar() {
+    function toggleStar() {
       if (!currentItem) return;
       currentItem.starred = !currentItem.starred;
       document.getElementById('starBtn').classList.toggle('active', currentItem.starred);
-
-      if (GAS_URL && !GAS_URL.includes('여기에_배포된_웹앱_URL') && currentItem.rowIndex) {
-        fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'toggleStar', rowIndex: currentItem.rowIndex })
-        }).catch(() => {});
-      }
+      postToSheet({ action: 'toggleStar', rowIndex: currentItem.rowIndex });
     }
 
-    function nextItem() {
-      loadItem(currentIndex + 1);
-    }
-
-    function prevItem() {
-      loadItem(currentIndex - 1);
-    }
-
-    function randomItem() {
-      if (filtered.length <= 1) return;
-      let nextIdx = currentIndex;
-      while (nextIdx === currentIndex) {
-        nextIdx = Math.floor(Math.random() * filtered.length);
-      }
-      loadItem(nextIdx);
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (!isRevealed) revealAnswer();
-        else speakText(currentItem?.english);
-      } else if (e.key === 'Enter') {
-        if (!isRevealed) revealAnswer();
-        else openScene('playphrase');
-      } else if (e.key === 'r' || e.key === 'R') {
-        rerollTrigger();
-      } else if (e.key === 'ArrowRight') {
-        nextItem();
-      } else if (e.key === 'ArrowLeft') {
-        prevItem();
-      }
-    });
+    function nextItem() { loadCardAt(currentIndex + 1); }
+    function prevItem() { loadCardAt(currentIndex - 1); }
 
     init();
   </script>
