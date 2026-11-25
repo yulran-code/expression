@@ -100,7 +100,6 @@
       background: #2b2d42;
       color: #c7d2fe;
     }
-    .tag.chunk { background: #1d3557; color: #90e0ef; }
     .tag.srs { background: #263238; color: #80cbc4; }
     .trigger-box {
       background: var(--box);
@@ -178,9 +177,46 @@
       text-align: center;
     }
     .answer-box.revealed { display: block; }
-    .answer-english { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.35; }
+    .answer-caption {
+      font-size: 12px;
+      color: #90e0ef;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+    .answer-english {
+      font-size: 21px;
+      font-weight: 500;
+      color: #e2e8f0;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
     .answer-english.masked { filter: blur(8px); cursor: pointer; }
-    .answer-korean { font-size: 16px; color: var(--gold); margin-bottom: 14px; }
+    .chunk-highlight {
+      background: rgba(255, 209, 102, 0.22);
+      color: #ffd166;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      border-bottom: 2px solid #ffd166;
+    }
+    .answer-korean {
+      font-size: 15px;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+    .answer-chunk-pill {
+      display: inline-block;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(29, 53, 87, 0.9);
+      color: #90e0ef;
+      border: 1px solid #355c8a;
+      margin-bottom: 14px;
+    }
     .video-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .btn-playphrase { background: #e63946; color: #fff; }
     .btn-yarn { background: #2a9d8f; color: #fff; }
@@ -217,7 +253,6 @@
       <div class="card-top">
         <div class="meta-row">
           <span class="tag" id="categoryTag">카테고리</span>
-          <span class="tag chunk" id="chunkTag">청크: -</span>
           <span class="tag srs" id="srsTag">SRS: 신규</span>
         </div>
         <button class="star-btn" id="starBtn" onclick="toggleStar()" title="즐겨찾기">★</button>
@@ -251,8 +286,10 @@
       </div>
 
       <div class="answer-box" id="answerBox">
+        <div class="answer-caption">🗣️ 자연스러운 실전 응답 (핵심 청크 강조)</div>
         <div class="answer-english" id="answerEnglish" onclick="this.classList.remove('masked')">-</div>
         <div class="answer-korean" id="answerKorean">-</div>
+        <div class="answer-chunk-pill" id="answerChunkPill">핵심 청크: -</div>
 
         <div class="video-actions">
           <button class="btn btn-playphrase" onclick="openScene('playphrase')">🎬 PlayPhrase 영화씬</button>
@@ -269,7 +306,7 @@
 
     <div class="nav-row">
       <button class="nav-btn" onclick="prevItem()">← 이전 카드</button>
-      <button class="nav-btn" onclick="speakEnglish(currentItem?.english)">🔊 정답 발음</button>
+      <button class="nav-btn" onclick="speakCurrentAnswer()">🔊 정답 발음</button>
       <button class="nav-btn" onclick="nextItem()">다음 카드 →</button>
     </div>
   </div>
@@ -284,7 +321,7 @@
     let queue = [];
     let currentIndex = 0;
     let currentItem = null;
-    let currentTrigger = { context: '', cue: '' };
+    let currentTrigger = { context: '', cue: '', fullAnswer: '', answerKo: '' };
     let isCueRevealed = false;
     let isRevealed = false;
     let isMasked = false;
@@ -297,6 +334,33 @@
         .trim()
         .replace(/^["“'‘]+|["”'’]+$/g, '')
         .trim();
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeRegExp(str) {
+      return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // 전체 응답 문장에서 핵심 청크(chunk)만 볼드 + 컬러 하이라이트
+    function formatHighlightedAnswer(sentence, chunk, fallbackPhrase) {
+      const baseText = cleanQuotes(sentence) || cleanQuotes(fallbackPhrase);
+      const safeSentence = escapeHtml(baseText);
+      const targetChunk = cleanQuotes(chunk || fallbackPhrase).replace(/[.?!,]+$/, '').trim();
+
+      if (!targetChunk) return safeSentence;
+
+      const regex = new RegExp(`(${escapeRegExp(targetChunk)})`, 'gi');
+      if (regex.test(baseText)) {
+        return safeSentence.replace(regex, '<span class="chunk-highlight">$1</span>');
+      }
+      return safeSentence;
     }
 
     function todayStr(offsetDays = 0) {
@@ -451,6 +515,12 @@
       fallbackBrowserTTS(text);
     }
 
+    function speakCurrentAnswer() {
+      if (!currentItem) return;
+      const answerToSpeak = currentTrigger.fullAnswer || currentItem.english;
+      speakEnglish(answerToSpeak);
+    }
+
     function postToSheet(payload) {
       if (!GAS_URL || GAS_URL.includes('여기에_배포된_웹앱_URL')) return;
       fetch(GAS_URL, {
@@ -529,19 +599,28 @@
       loadCardAt(0);
     }
 
-    function pickRandomTrigger(triggersRaw) {
+    // 2단(상황::대사)과 3·4단(상황::대사::자연스러운전체응답::한국어해석) 모두 지원
+    function pickRandomTrigger(item) {
+      const triggersRaw = item.triggers;
       if (!triggersRaw) {
-        return { context: '자연스러운 일상 대화 상황', cue: "How's it going?" };
+        return {
+          context: '자연스러운 일상 대화 상황',
+          cue: "How's it going?",
+          fullAnswer: item.english || '',
+          answerKo: item.korean || ''
+        };
       }
       const partsList = String(triggersRaw)
         .split('|')
         .map(s => s.trim())
         .filter(Boolean);
       const chosen = partsList[Math.floor(Math.random() * partsList.length)] || '';
-      const [ctx, cue] = chosen.split('::');
+      const segments = chosen.split('::');
       return {
-        context: cleanQuotes(ctx) || '일상 대화 상황',
-        cue: cleanQuotes(cue)
+        context: cleanQuotes(segments[0]) || '일상 대화 상황',
+        cue: cleanQuotes(segments[1]),
+        fullAnswer: cleanQuotes(segments[2]) || cleanQuotes(item.english),
+        answerKo: cleanQuotes(segments[3]) || cleanQuotes(item.korean)
       };
     }
 
@@ -552,6 +631,20 @@
       const nextEasy = interval === 0 ? 4 : Math.round(nextGood * 1.3);
       document.getElementById('goodLabel').innerText = `(+${nextGood}일)`;
       document.getElementById('easyLabel').innerText = `(+${nextEasy}일)`;
+    }
+
+    function syncAnswerDisplay() {
+      if (!currentItem) return;
+      const fullAns = currentTrigger.fullAnswer || currentItem.english || '';
+      const koAns = currentTrigger.answerKo || currentItem.korean || '';
+      const targetChunk = currentItem.chunk || currentItem.english || '';
+
+      document.getElementById('answerEnglish').innerHTML =
+        formatHighlightedAnswer(fullAns, targetChunk, currentItem.english);
+      document.getElementById('answerEnglish').classList.toggle('masked', isMasked);
+      document.getElementById('answerKorean').innerText = koAns;
+      document.getElementById('answerChunkPill').innerHTML =
+        `핵심 청크: <span class="chunk-highlight">${escapeHtml(cleanQuotes(targetChunk))}</span>`;
     }
 
     function loadCardAt(idx) {
@@ -576,15 +669,10 @@
       document.getElementById('statusBadge').innerText =
         `남은 카드 ${queue.length}개 · 누적 ${Number(currentItem.count) || 0}회`;
       document.getElementById('categoryTag').innerText = currentItem.category || '일반';
-      document.getElementById('chunkTag').innerText = `청크: ${currentItem.chunk || currentItem.english}`;
       document.getElementById('srsTag').innerText = currentItem.due
         ? `다음 복습: ${currentItem.due} (간격 ${currentItem.interval || 0}일)`
         : 'SRS: 신규';
       document.getElementById('starBtn').classList.toggle('active', Boolean(currentItem.starred));
-
-      document.getElementById('answerEnglish').innerText = currentItem.english;
-      document.getElementById('answerEnglish').classList.toggle('masked', isMasked);
-      document.getElementById('answerKorean').innerText = currentItem.korean;
 
       updateSrsPreviewLabels(currentItem);
       rerollTrigger();
@@ -592,7 +680,7 @@
 
     function rerollTrigger() {
       if (!currentItem) return;
-      currentTrigger = pickRandomTrigger(currentItem.triggers);
+      currentTrigger = pickRandomTrigger(currentItem);
       isCueRevealed = false;
 
       document.getElementById('contextText').innerText = currentTrigger.context;
@@ -601,6 +689,8 @@
       document.getElementById('cueText').classList.remove('revealed');
       document.getElementById('cueHiddenNote').style.display = 'block';
       document.getElementById('cueActionBtn').innerText = '🔊 상대 대사 보기 & 듣기';
+
+      syncAnswerDisplay();
     }
 
     function revealAndSpeakCue() {
@@ -613,21 +703,23 @@
 
     function showHint() {
       if (!currentItem) return;
-      const words = currentItem.english.split(/\s+/);
+      const targetChunk = cleanQuotes(currentItem.chunk || currentItem.english);
+      const words = targetChunk.split(/\s+/);
       const firstWord = words[0] || '';
       const maskedRest = words.slice(1).map(w => w.replace(/[A-Za-z']/g, '_')).join(' ');
       const hb = document.getElementById('hintBox');
-      hb.innerText = `💡 첫 단어 힌트: ${firstWord} ${maskedRest}  |  뜻 힌트: ${currentItem.korean}`;
+      hb.innerText = `💡 핵심 청크 힌트: ${firstWord} ${maskedRest}  |  뜻: ${currentItem.korean}`;
       hb.classList.add('show');
     }
 
     function revealAnswer() {
       if (!currentItem) return;
       isRevealed = true;
+      syncAnswerDisplay();
       document.getElementById('answerBox').classList.add('revealed');
       document.getElementById('preRevealControls').style.display = 'none';
       document.getElementById('speakPrompt').style.display = 'none';
-      speakEnglish(currentItem.english);
+      speakCurrentAnswer();
     }
 
     function openScene(platform) {
